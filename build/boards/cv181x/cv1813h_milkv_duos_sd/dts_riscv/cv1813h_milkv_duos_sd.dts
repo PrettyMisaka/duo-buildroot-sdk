@@ -21,14 +21,6 @@
 	status = "okay";
 };
 
-&spi3 {
-	status = "okay";
-
-	spidev@0 {
-		status = "okay";
-	};
-};
-
 &usb {
 	vbus-gpio = <&portb 6 0>;
 };
@@ -57,3 +49,16 @@
 	model = "Milk-V DuoS";
 };
 
+&spi3 {
+	status = "okay";
+	/delete-node/ spidev@0;
+	display@0{
+		compatible = "eastrising,er-tft035-6";  //匹配驱动名称，使用st7789的话修改为sitronix,st7789v_240x320
+		reg = <0>;
+		status = "okay";
+		spi-max-frequency = <80000000>;
+		dc-gpios = <&portb 22 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&portb 12 GPIO_ACTIVE_HIGH>;
+		rotation = <270>;
+	};
+};

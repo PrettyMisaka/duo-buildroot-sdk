@@ -34,7 +34,7 @@ extern "C" {
 #define CVI_VDEC_MASK_TRACE	0x4000
 #define CVI_VDEC_MASK_DUMP_YUV	0x10000
 #define CVI_VDEC_MASK_DUMP_BS	0x20000
-#define CVI_VDEC_MASK_CURR	(CVI_VDEC_MASK_ERR)
+#define CVI_VDEC_MASK_CURR	(CVI_VDEC_MASK_DBG)
 
 typedef struct _vdec_dbg_ {
 	CVI_S32 startFn;

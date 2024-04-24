@@ -287,7 +287,7 @@
 	#endif
 
 	#define SET_BOOTARGS "setenv bootargs ${reserved_mem} ${root} ${mtdparts} " \
-					"console=$consoledev,$baudrate $othbootargs;"
+					"console=tty0 console=$consoledev,$baudrate $othbootargs;"
 
 	#define SD_BOOTM_COMMAND \
 				SET_BOOTARGS \
@@ -339,6 +339,7 @@
 #define CVI_SPL_BOOTAGRS \
 	PARTS " "  \
 	ROOTARGS " " \
-	"console=ttyS0,115200 " \
+	"console=tty0  console=ttyS0,115200 "\
 	OTHERBOOTARGS "\0"
 #endif /* __CV181X_ASIC_H__ */
+/* console=ttyS0,115200 */
