@@ -200,6 +200,15 @@ function build_kernel()
   fi
 )}
 
+function build_kernel_module()
+{(
+  echo "驱动目录：$1"
+  print_notice "Run ${FUNCNAME[0]}() function"
+  _build_kernel_env
+  cd "$BUILD_PATH" || return
+  make kernel-build-mymodule M=$1|| return "$?"
+)}
+
 function clean_kernel()
 {(
   print_notice "Run ${FUNCNAME[0]}() function"

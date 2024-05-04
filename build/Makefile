@@ -348,6 +348,10 @@ ifeq ($(patsubst "%",%,$(CONFIG_ARCH)),arm64)
 endif
 	${Q}ln -sf ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}  ${KERNEL_PATH}/build/kernel_output
 
+kernel-build-mymodule:${KERNEL_OUTPUT_CONFIG_PATH}
+	${Q}echo LOCALVERSION=${LOCALVERSION}
+	${Q}$(MAKE) -j${NPROC} -C ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER} M=/home/lyy/milkv-sdk/duo-examples/duos-prj/studyLinuxDir/driver modules
+
 ifeq ($(CONFIG_TOOLCHAIN_GLIBC_ARM64),y)
 INITRAMFS_BASE := glibc_arm64
 else ifeq ($(CONFIG_TOOLCHAIN_GLIBC_ARM),y)
