@@ -66,22 +66,14 @@ for (x = 0; x < pixels; x+=2) {
     u16 w1 = (*sbuf); // corrected by firstman
     sbuf++;
 
-    u8 r0 = ((w0 & 0xF800) >> 8);
-    u8 g0 = ((w0 & 0x07E0) >> 3);
-    u8 b0 = ((w0 & 0x001F) << 3);
+    *dst++ = ((w0 & 0xF800) >> 8); // G0
+    *dst++ = ((w0 & 0x07E0) >> 3); // R0
 
-    u8 r1 = ((w1 & 0xF800) >> 8);
-    u8 g1 = ((w1 & 0x07E0) >> 3);
-    u8 b1 = ((w1 & 0x001F) << 3);
+    *dst++ = ((w0 & 0x001F) << 3); // R1
+    *dst++ = ((w1 & 0xF800) >> 8); // B0
 
-    *dst++ = g0; // G0
-    *dst++ = r0; // R0
-
-    *dst++ = r1; // R1
-    *dst++ = b0; // B0
-
-    *dst++ = b1; // B1
-    *dst++ = g1; // G1.
+    *dst++ = ((w1 & 0x07E0) >> 3); // B1
+    *dst++ = ((w1 & 0x001F) << 3); // G1.
 }
 }
 
@@ -113,6 +105,32 @@ static void ili9488_rgb565_to_rgb666(u8 *dst, void *vaddr,
 	kfree(sbuf);
 }
 
+static void ili9488_rgb888_to_rgb666(u8 *dst, void *vaddr,
+				     struct drm_framebuffer *fb,
+				     struct drm_rect *rect)
+{
+	//一行中的像素数 linepixels 
+	size_t linepixels = rect->x2 - rect->x1;
+	//源缓冲区每行长度
+	size_t src_len = linepixels * 3;
+	//目标缓冲区每行长度
+	size_t dst_len = linepixels * 3;
+	unsigned int y, lines = rect->y2 - rect->y1;
+
+	/*
+	 * The cma memory is write-combined so reads are uncached.
+	 * Speed up by fetching one line at a time.
+	 */
+
+	// y 0->320 x 0->480
+	vaddr += rect->y1 * fb->pitches[0] + rect->x1 * 3;
+	for (y = 0; y < lines; y++) {
+		memcpy(dst, vaddr, src_len);
+		vaddr += fb->pitches[0];
+		dst += dst_len;
+	}
+}
+
 static int ili9488_buf_copy(void *dst, struct drm_framebuffer *fb,
 			    struct drm_rect *rect)
 {
@@ -132,6 +150,9 @@ static int ili9488_buf_copy(void *dst, struct drm_framebuffer *fb,
 	switch (fb->format->format) {
 	case DRM_FORMAT_RGB565:
 		ili9488_rgb565_to_rgb666(dst, src, fb, rect);
+		break;
+	case DRM_FORMAT_RGB888:
+		ili9488_rgb888_to_rgb666(dst, src, fb, rect);
 		break;
 	default:
 		dev_err_once(fb->dev->dev, "Format is not supported: %s\n",
@@ -172,7 +193,8 @@ static void ili9488_fb_dirty(struct drm_framebuffer *fb, struct drm_rect *rect)
 	 * only RGB666 format which is not implemented in DRM
 	 */
 	if (!dbi->dc || !full ||
-	    fb->format->format == DRM_FORMAT_RGB565) {
+	    fb->format->format == DRM_FORMAT_RGB565 ||
+		fb->format->format == DRM_FORMAT_RGB888 ) {
 		tr = dbidev->tx_buf;
 		ret = ili9488_buf_copy(dbidev->tx_buf, fb, rect);
 		if (ret)
@@ -318,6 +340,7 @@ static void ili9488_pipe_disable(struct drm_simple_display_pipe *pipe)
 }
 
 static const u32 ili9488_formats[] = {
+	DRM_FORMAT_RGB888,
 	DRM_FORMAT_RGB565,
 };
 
@@ -409,7 +432,8 @@ static int ili9488_probe(struct spi_device *spi)
 	if (ret)
 		return ret;
 
-	dbidev->drm.mode_config.preferred_depth = 16;
+	dbidev->drm.mode_config.preferred_depth = 24;
+	dbi->swap_bytes = !dbi->swap_bytes;
 
 	ret = mipi_dbi_dev_init_with_formats(dbidev, &ili9488_pipe_funcs,
 					     ili9488_formats,
