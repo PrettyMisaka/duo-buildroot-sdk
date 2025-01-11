@@ -337,6 +337,7 @@ function build_all()
   # build bsp
   build_uboot || return $?
   build_kernel || return $?
+  build_rtos || return $?
   build_osdrv || return $?
   build_middleware || return $?
   pack_access_guard_turnkey_app || return $?
